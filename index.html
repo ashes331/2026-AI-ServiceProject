@@ -7,28 +7,39 @@
     <style>
         body { font-family: -apple-system, sans-serif; background-color: #f5f5f7; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .chat-container { width: 100%; max-width: 500px; background: white; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 85vh; overflow: hidden; }
+        .header { padding: 15px; text-align: center; border-bottom: 1px solid #efeff4; font-weight: bold; display: flex; align-items: center; justify-content: center; position: relative; }
+        .end-btn { position: absolute; right: 15px; background: #ff3b30; color: white; border: none; padding: 6px 14px; border-radius: 15px; cursor: pointer; font-size: 13px; font-weight: 600; }
         #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .msg { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 15px; line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
         .user { align-self: flex-end; background: #007aff; color: white; border-bottom-right-radius: 4px; }
         .ai { align-self: flex-start; background: #f2f2f7; color: #1c1c1e; border-bottom-left-radius: 4px; }
+        .system { align-self: center; background: #e5e5ea; color: #636366; font-size: 13px; padding: 8px 14px; border-radius: 12px; }
         .loading { font-size: 13px; color: #8e8e93; margin-left: 5px; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
         .input-area { border-top: 1px solid #efeff4; padding: 20px; display: flex; gap: 10px; }
         input { flex: 1; border: 1px solid #d1d1d6; padding: 12px 16px; border-radius: 25px; outline: none; font-size: 15px; }
-        button { background: #007aff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; }
+        button.send-btn { background: #007aff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 600; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
 <body>
     <div class="chat-container">
-        <div style="padding: 15px; text-align: center; border-bottom: 1px solid #efeff4; font-weight: bold;">AI 진로상담소 (feat. 잠꾸러기)</div>
+        <div class="header">
+            AI 진로상담소 (feat. 잠꾸러기)
+            <button class="end-btn" onclick="endSession()">상담 종료</button>
+        </div>
         <div id="chat-box"></div>
         <div class="input-area">
             <input type="text" id="userInput" placeholder="잠꾸러기에게 고민을 털어놔보세요..." onkeypress="if(event.keyCode==13) askAI()">
-            <button onclick="askAI()">전송</button>
+            <button class="send-btn" id="sendBtn" onclick="askAI()">전송</button>
         </div>
     </div>
 
     <script>
+        var history = [];
+        var userName = '';
+        var isEnded = false;
+
         function appendMsg(cls, text, isError) {
             var chatBox = document.getElementById('chat-box');
             var div = document.createElement('div');
@@ -37,9 +48,10 @@
             div.textContent = text;
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
+            return div;
         }
 
-        // 초기 인사 메시지 (변수로 분리하여 SyntaxError 방지)
+        // 초기 인사 메시지
         var greeting = [
             '안녕! 나는 진로 상담가 잠꾸러기야 😊',
             '낮잠을 좋아하지만, 진로 고민만큼은 진지하게 들어줄게!',
@@ -48,13 +60,35 @@
         ].join('\n');
         appendMsg('ai', greeting);
 
+        async function sendToMake(payload) {
+            var controller = new AbortController();
+            var timeout = setTimeout(function() { controller.abort(); }, 60000);
+
+            var response = await fetch('https://hook.us2.make.com/0o3c652emvls2hst8p9xyfnwa8pjn864', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeout);
+            return await response.text();
+        }
+
         async function askAI() {
+            if (isEnded) return;
             var input = document.getElementById('userInput');
             var chatBox = document.getElementById('chat-box');
             if (!input.value.trim()) return;
 
-            var question = input.value;
+            var question = input.value.trim();
             appendMsg('user', question);
+
+            if (!userName && question.length <= 10) {
+                userName = question;
+            }
+
+            history.push({ role: 'user', content: question });
 
             var loadingEl = document.createElement('div');
             loadingEl.className = 'loading';
@@ -65,21 +99,16 @@
             input.value = '';
 
             try {
-                var controller = new AbortController();
-                var timeout = setTimeout(function() { controller.abort(); }, 60000);
-
-                var response = await fetch('https://hook.us2.make.com/0o3c652emvls2hst8p9xyfnwa8pjn864', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: question }),
-                    signal: controller.signal
+                var text = await sendToMake({
+                    type: 'chat',
+                    messages: history,
+                    name: userName
                 });
 
-                clearTimeout(timeout);
-                var text = await response.text();
                 loadingEl.remove();
-
-                appendMsg('ai', text.trim());
+                var answer = text.trim();
+                appendMsg('ai', answer);
+                history.push({ role: 'assistant', content: answer });
 
             } catch (error) {
                 loadingEl.remove();
@@ -87,7 +116,47 @@
                     ? '시간이 너무 오래 걸려요. 질문을 조금 짧게 해볼까요?'
                     : '잠꾸러기가 너무 깊이 잠들었나봐요. 다시 한번만 깨워주세요!';
                 appendMsg('ai', msg, true);
-                console.error('에러:', error);
+            }
+        }
+
+        async function endSession() {
+            if (isEnded) return;
+            if (history.length === 0) {
+                appendMsg('system', '대화 내용이 없어요. 먼저 잠꾸러기와 이야기해보세요!');
+                return;
+            }
+
+            isEnded = true;
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('userInput').disabled = true;
+            document.querySelector('.end-btn').disabled = true;
+
+            appendMsg('system', '상담을 종료하고 결과를 저장하는 중이에요... 💤');
+
+            var chatBox = document.getElementById('chat-box');
+            var loadingEl = document.createElement('div');
+            loadingEl.className = 'loading';
+            loadingEl.textContent = '잠꾸러기가 상담 내용을 정리하는 중...';
+            chatBox.appendChild(loadingEl);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                await sendToMake({
+                    type: 'end',
+                    messages: history,
+                    name: userName
+                });
+
+                loadingEl.remove();
+                appendMsg('system', '상담 결과가 저장됐어요! 잠꾸러기가 응원할게 😊');
+
+            } catch (error) {
+                loadingEl.remove();
+                appendMsg('system', '저장 중 오류가 발생했어요. 다시 시도해주세요.', true);
+                isEnded = false;
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('userInput').disabled = false;
+                document.querySelector('.end-btn').disabled = false;
             }
         }
     </script>

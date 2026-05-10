@@ -43,37 +43,29 @@
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // 연결 대기 시간 설정을 위한 컨트롤러 (네트워크 환경 대응)
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60초까지 기다림
-
             try {
                 const response = await fetch('https://hook.us2.make.com/0o3c652emvls2hst8p9xyfnwa8pjn864', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: question }),
-                    signal: controller.signal
+                    body: JSON.stringify({ question: question })
                 });
 
-                clearTimeout(timeoutId);
-
-                const textData = await response.text();
-                // 데이터가 비어있지 않은지 확인
-                if (!textData) throw new Error('응답 데이터가 비어있습니다.');
+                const textData = await response.text(); // 일단 텍스트로 모두 받음
                 
-                const data = JSON.parse(textData);
-
                 if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
-                chatBox.innerHTML += `<div class="msg ai">${data.answer || "잠꾸러기가 대답을 잊어버렸나봐요."}</div>`;
+
+                try {
+                    // JSON 형식이 맞는지 확인
+                    const data = JSON.parse(textData);
+                    chatBox.innerHTML += `<div class="msg ai">${data.answer}</div>`;
+                } catch (e) {
+                    // JSON이 아니면(Make 에러 문구라면) 해당 텍스트를 그대로 출력하여 원인 파악
+                    chatBox.innerHTML += `<div class="msg ai" style="color:orange;">[잠꾸러기 알림]: ${textData}</div>`;
+                }
+
             } catch (error) {
-                clearTimeout(timeoutId);
-                console.error("상세 에러:", error);
                 if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
-                
-                let errorMsg = "잠꾸러기가 너무 깊이 잠들었나봐요. 다시 깨워주세요!";
-                if (error.name === 'AbortError') errorMsg = "답변이 너무 길어 잠꾸러기가 지쳤나봐요. 조금 짧게 물어봐주세요!";
-                
-                chatBox.innerHTML += `<div class="msg ai" style="color:red;">${errorMsg}</div>`;
+                chatBox.innerHTML += `<div class="msg ai" style="color:red;">연결 실패! 인터넷 연결이나 웹훅 주소를 확인해주세요.</div>`;
             }
             chatBox.scrollTop = chatBox.scrollHeight;
         }

@@ -29,61 +29,72 @@
     </div>
 
     <script>
+        function extractAnswer(rawText) {
+            // 1) 정상 JSON 파싱 시도
+            try {
+                const data = JSON.parse(rawText);
+                if (data.answer) return data.answer;
+            } catch (_) {}
+
+            // 2) JSON 파싱 실패 시: 줄바꿈·따옴표 이스케이프 후 재시도
+            try {
+                const cleaned = rawText
+                    .replace(/[\r\n]+/g, ' ')   // 줄바꿈 → 공백
+                    .replace(/[\u0000-\u001F]/g, ''); // 기타 제어문자 제거
+                const data = JSON.parse(cleaned);
+                if (data.answer) return data.answer;
+            } catch (_) {}
+
+            // 3) 정규식으로 "answer" 값만 추출 (JSON 구조가 깨진 경우 대비)
+            const match = rawText.match(/"answer"\s*:\s*"([\s\S]*?)"\s*[,}]/);
+            if (match) return match[1].replace(/\\n/g, '\n');
+
+            // 4) 최후 수단: 원문 그대로
+            return rawText;
+        }
+
         async function askAI() {
             const input = document.getElementById('userInput');
             const chatBox = document.getElementById('chat-box');
-            if(!input.value.trim()) return;
+            if (!input.value.trim()) return;
 
             const question = input.value;
             chatBox.innerHTML += `<div class="msg user">${question}</div>`;
-            
+
             const loadingId = "loading-" + Date.now();
             chatBox.innerHTML += `<div id="${loadingId}" class="loading">잠꾸러기가 답변을 가져오는 중...💤</div>`;
-            
+
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                // 타임아웃 60초 설정
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 60000);
 
                 const response = await fetch('https://hook.us2.make.com/0o3c652emvls2hst8p9xyfnwa8pjn864', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ question: question }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question }),
                     signal: controller.signal
                 });
 
                 clearTimeout(timeout);
-                const textData = await response.text(); 
-                
-                if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                const rawText = await response.text();
 
-                // 1단계: JSON 시도
-                try {
-                    const data = JSON.parse(textData);
-                    const finalAnswer = data.answer || textData;
-                    chatBox.innerHTML += `<div class="msg ai">${finalAnswer}</div>`;
-                } catch (e) {
-                    // 2단계: JSON이 아니면 그냥 텍스트로 출력 (Scenario failed... 문구 등)
-                    if (textData.trim()) {
-                        chatBox.innerHTML += `<div class="msg ai">${textData}</div>`;
-                    } else {
-                        throw new Error("Empty Response");
-                    }
-                }
+                if (document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+
+                const finalAnswer = extractAnswer(rawText);
+                chatBox.innerHTML += `<div class="msg ai">${finalAnswer}</div>`;
 
             } catch (error) {
-                if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
-                let errorMsg = "잠꾸러기가 너무 깊이 잠들었나봐요. 다시 한번만 깨워주세요!";
-                if(error.name === 'AbortError') errorMsg = "시간이 너무 오래 걸려요. 질문을 조금 짧게 해볼까요?";
-                
+                if (document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                const errorMsg = error.name === 'AbortError'
+                    ? "시간이 너무 오래 걸려요. 질문을 조금 짧게 해볼까요?"
+                    : "잠꾸러기가 너무 깊이 잠들었나봐요. 다시 한번만 깨워주세요!";
                 chatBox.innerHTML += `<div class="msg ai" style="color:red;">${errorMsg}</div>`;
-                console.error("최종 에러 상세:", error);
+                console.error("에러:", error);
             }
+
             chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>

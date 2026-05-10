@@ -416,10 +416,10 @@
 
     // 초기 인사
     var greeting = [
-        '안녕! 나는 진로 상담가 잠꾸러기야 😊',
-        '낮잠을 좋아하지만, 진로 고민만큼은 진지하게 들어줄게!',
+        '안녕하세요! 저는 진로 상담가 잠꾸러기에요 😊',
+        '낮잠을 좋아하지만, 진로 고민만큼은 진지하게 해드릴께요!',
         '',
-        '먼저 네 이름을 알려줄래? 더 친근하게 이야기 나눌 수 있을 것 같아 🌙'
+        '먼저 당신의 이름을 알려줄래요? 더 친근하게 이야기 나눌 수 있을 것 같아요 🌙'
     ].join('\n');
     appendMsg('ai', greeting);
 
@@ -483,7 +483,7 @@
         try {
             await sendToMake({ type: 'end', question: historyToText(), name: userName });
             loadingEl.remove();
-            appendMsg('system', '상담 결과가 저장됐어요! 잠꾸러기가 응원할게 🌙✨');
+            appendMsg('system', '상담 결과가 저장됐어요! 잠꾸러기가 응원할게요 🌙✨');
         } catch (error) {
             loadingEl.remove();
             appendMsg('system', '저장 중 오류가 발생했어요.', true);

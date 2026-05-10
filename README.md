@@ -13,8 +13,8 @@
 *A sleepy but sincere AI career counseling chatbot*
 
 [![Live Demo](https://img.shields.io/badge/🌙_Live_Demo-6d28d9?style=for-the-badge)](https://ashes331.github.io/2026-AI-ServiceProject/)
-[![Made with Claude](https://img.shields.io/badge/Made_with-Claude_AI-8b5cf6?style=for-the-badge)](https://anthropic.com)
-[![Powered by Make](https://img.shields.io/badge/Powered_by-Make.com-a78bfa?style=for-the-badge)](https://make.com)
+[![Made with Claude](https://img.shields.io/badge/Made_with-Claude_AI-8b5cf6?style=for-the-badge&logo=anthropic&logoColor=white)](https://anthropic.com)
+[![Powered by Make](https://img.shields.io/badge/Powered_by-Make.com-a78bfa?style=for-the-badge&logo=make&logoColor=white)](https://make.com)
 
 </div>
 

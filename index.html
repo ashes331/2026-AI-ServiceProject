@@ -50,22 +50,23 @@
                     body: JSON.stringify({ question: question })
                 });
 
-                const textData = await response.text(); // 일단 텍스트로 모두 받음
+                const textData = await response.text(); 
                 
                 if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
 
                 try {
-                    // JSON 형식이 맞는지 확인
+                    // 서버 응답이 정상적인 JSON인지 확인
                     const data = JSON.parse(textData);
                     chatBox.innerHTML += `<div class="msg ai">${data.answer}</div>`;
                 } catch (e) {
-                    // JSON이 아니면(Make 에러 문구라면) 해당 텍스트를 그대로 출력하여 원인 파악
-                    chatBox.innerHTML += `<div class="msg ai" style="color:orange;">[잠꾸러기 알림]: ${textData}</div>`;
+                    // JSON이 아니면(에러 문구라면) 해당 내용을 그대로 출력
+                    chatBox.innerHTML += `<div class="msg ai" style="color:orange; border:1px solid orange;">[서버 응답 메시지]: ${textData}</div>`;
+                    console.log("Raw 서버 데이터:", textData);
                 }
 
             } catch (error) {
                 if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
-                chatBox.innerHTML += `<div class="msg ai" style="color:red;">연결 실패! 인터넷 연결이나 웹훅 주소를 확인해주세요.</div>`;
+                chatBox.innerHTML += `<div class="msg ai" style="color:red;">네트워크 연결에 실패했습니다.</div>`;
             }
             chatBox.scrollTop = chatBox.scrollHeight;
         }

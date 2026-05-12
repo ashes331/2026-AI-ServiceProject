@@ -32,7 +32,6 @@
 Through conversation, it identifies your interests and strengths to recommend the best career paths.
 
 **아직 한국어만 설정되어있습니다. 영어는 후에 추가가 될 수도 있습니다.**
-
 **Only Korean is set up yet. English may be added later.**
 
 ---

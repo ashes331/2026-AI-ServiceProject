@@ -85,9 +85,9 @@ Through conversation, it identifies your interests and strengths to recommend th
 
 </div>
 
-**Webhook** → **Claude Sonnet 4** → **Router** → **Google Sheets** → **Webhook Response**
-                                               → **Google Sheets** → **Webhook Response**
-
+................................................↗**Webhook Response**
+**Webhook** → **Anthropic Claude** → **Router**
+................................................↘**Anthropic Claude** → **Anthropic Claude** → **Google Sheets** → **Webhook Response**                                        
 ---
 
 ## 📁 파일 구조 | File Structure

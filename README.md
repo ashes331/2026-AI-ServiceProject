@@ -87,8 +87,8 @@ Through conversation, it identifies your interests and strengths to recommend th
 
 
 
-```                                                ↗ **Webhook Response**````
-**Webhook** → **Anthropic Claude** → **Router**
+```                                              
+**Webhook** → **Anthropic Claude** → **Router** →  **Webhook Response**
                                                 ↘ **Anthropic Claude** → **Anthropic Claude** → **Google Sheets** → **Webhook Response**   ```
                                                 
                                                 

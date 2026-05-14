@@ -86,6 +86,7 @@ Through conversation, it identifies your interests and strengths to recommend th
 </div>
 
 **Webhook** → **Claude Sonnet 4** → **Router** → **Google Sheets** → **Webhook Response**
+                                               → **Google Sheets** → **Webhook Response**
 
 ---
 
